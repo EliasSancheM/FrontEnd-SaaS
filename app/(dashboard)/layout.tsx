@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/authStore';
@@ -19,6 +19,8 @@ import {
   Building2,
   Loader2
 } from 'lucide-react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 interface SidebarItem {
   name: string;
@@ -43,8 +45,43 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  const sidebarRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
   const { user, isAuthenticated, isInitialized, initialize, logout } = useAuthStore();
   const saasStore = useSaaSStore();
+
+  useGSAP(() => {
+    if (isAuthenticated) {
+      const tl = gsap.timeline();
+      
+      if (sidebarRef.current) {
+        tl.fromTo(sidebarRef.current, 
+          { x: -50, opacity: 0 }, 
+          { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }
+        );
+      }
+      
+      if (headerRef.current) {
+        tl.fromTo(headerRef.current,
+          { y: -20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+          '-=0.3'
+        );
+      }
+
+      if (contentRef.current) {
+        tl.fromTo(contentRef.current,
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+          '-=0.2'
+        );
+      }
+    }
+  }, { scope: sidebarRef, dependencies: [isAuthenticated] });
+
+
 
   useEffect(() => {
     initialize();
@@ -66,10 +103,10 @@ export default function DashboardLayout({
   if (!isInitialized || !isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.08),transparent_60%)]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 shadow-2xl animate-pulse">
-            <Loader2 className="w-7 h-7 animate-spin text-emerald-450" />
+          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-2xl animate-pulse">
+            <Loader2 className="w-7 h-7 animate-spin text-primary" />
           </div>
           <p className="text-xs font-semibold tracking-wider text-zinc-400 uppercase animate-pulse">Iniciando consola segura...</p>
         </div>
@@ -90,7 +127,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50/10 dark:bg-[#0a0f1d]/20 backdrop-blur-[4px] overflow-hidden">
+    <div className="flex h-screen bg-background/50 backdrop-blur-[4px] overflow-hidden animate-fade-in-up">
       
       {/* --- SIDEBAR RESPONSIVO PARA MÓVIL --- */}
       {sidebarOpen && (
@@ -100,68 +137,68 @@ export default function DashboardLayout({
         />
       )}
 
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-white/90 dark:bg-[#0e1427]/75 backdrop-blur-xl 
-        border-r border-zinc-100 dark:border-zinc-900/60 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+      <aside ref={sidebarRef} className={`
+        fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-card/95 backdrop-blur-xl 
+        border-r border-border/60 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         
         {/* LOGO DE LA APLICACIÓN */}
-        <div className="flex items-center justify-between h-20 px-6 border-b border-zinc-100 dark:border-zinc-900">
+        <div className="flex items-center justify-between h-20 px-6 border-b border-border">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground font-bold text-xl shadow-lg shadow-primary/20">
               F
             </div>
-            <span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            <span className="text-xl font-bold tracking-tight text-foreground">
               Factura<span className="text-primary font-extrabold">SaaS</span>
             </span>
           </Link>
           <button 
             onClick={() => setSidebarOpen(false)}
-            className="p-1 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 lg:hidden"
+            className="p-1 rounded-lg text-muted-foreground hover:bg-muted lg:hidden"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* SELECTOR DE TENANT (EMPRESA MULTI-INQUILINO) */}
-        <div className="px-4 py-6 border-b border-zinc-100 dark:border-zinc-900 relative">
+        <div className="px-4 py-6 border-b border-border relative">
           <button 
             onClick={() => setTenantDropdownOpen(!tenantDropdownOpen)}
-            className="flex items-center justify-between w-full p-3 rounded-xl bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 border border-zinc-100 dark:border-zinc-800/60 transition-all duration-200"
+            className="flex items-center justify-between w-full p-3 rounded-xl bg-secondary hover:bg-secondary/80 border border-border/60 transition-all duration-300 hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3 text-left">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-primary">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">
+                <p className="text-sm font-semibold text-foreground truncate max-w-[140px]">
                   {activeTenant.name}
                 </p>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-[11px] text-muted-foreground">
                   {activeTenant.taxId}
                 </p>
               </div>
             </div>
-            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${tenantDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${tenantDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Menú desplegable simulado para cambiar de empresa */}
           {tenantDropdownOpen && (
-            <div className="absolute left-4 right-4 mt-2 p-1.5 bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800/80 rounded-xl shadow-xl z-50 animate-in fade-in-50 slide-in-from-top-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+            <div className="absolute left-4 right-4 mt-2 p-1.5 bg-card border border-border/80 rounded-xl shadow-xl z-50 animate-in fade-in-50 slide-in-from-top-1">
+              <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 Mis Organizaciones
               </div>
-              <button className="flex w-full items-center gap-2 p-2.5 rounded-lg text-sm bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white font-medium text-left">
+              <button className="flex w-full items-center gap-2 p-2.5 rounded-lg text-sm bg-secondary text-foreground font-medium text-left">
                 <span className="w-2 h-2 rounded-full bg-primary" />
                 {activeTenant.name}
               </button>
-              <button className="flex w-full items-center gap-2 p-2.5 rounded-lg text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900/60 text-zinc-600 dark:text-zinc-400 text-left transition-colors">
-                <span className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+              <button className="flex w-full items-center gap-2 p-2.5 rounded-lg text-sm hover:bg-secondary/60 text-muted-foreground text-left transition-colors">
+                <span className="w-2 h-2 rounded-full bg-muted-foreground" />
                 Empresa Constructora SpA
               </button>
-              <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1" />
-              <button className="flex w-full items-center justify-center p-2 rounded-lg text-xs text-primary font-semibold hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors">
+              <div className="h-px bg-border my-1" />
+              <button className="flex w-full items-center justify-center p-2 rounded-lg text-xs text-primary font-semibold hover:bg-primary/10 transition-colors">
                 + Crear nueva empresa
               </button>
             </div>
@@ -181,13 +218,13 @@ export default function DashboardLayout({
                   flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group
                   ${isActive 
                     ? 'bg-primary/10 text-primary border-l-4 border-primary pl-3' 
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-zinc-900/60 dark:hover:text-white'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                   }
                 `}
               >
                 <Icon className={`
                   w-5 h-5 transition-transform duration-200 group-hover:scale-105
-                  ${isActive ? 'text-primary' : 'text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white'}
+                  ${isActive ? 'text-primary scale-110' : 'text-muted-foreground group-hover:text-foreground'}
                 `} />
                 {item.name}
               </Link>
@@ -196,25 +233,25 @@ export default function DashboardLayout({
         </nav>
 
         {/* PERFIL DE USUARIO Y CIERRE DE SESIÓN */}
-        <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 dark:bg-[#0c0c0c]">
+        <div className="p-4 border-t border-border bg-card">
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/20 text-primary font-black tracking-wider text-xs">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary font-black tracking-wider text-xs shadow-sm">
               {user?.name 
                 ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() 
                 : 'US'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-zinc-900 dark:text-white truncate">
+              <p className="text-sm font-bold text-foreground truncate">
                 {user?.name || 'Usuario'}
               </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              <p className="text-[11px] text-muted-foreground truncate">
                 {user?.email || 'admin@misaas.cl'}
               </p>
             </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-red-200 hover:border-red-300 bg-red-500/5 hover:bg-red-500/10 text-red-600 dark:border-red-950 dark:bg-red-950/20 dark:text-red-400 text-sm font-semibold transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-destructive/20 hover:border-destructive/40 bg-destructive/5 hover:bg-destructive/10 text-destructive text-sm font-semibold transition-all duration-300 cursor-pointer hover:-translate-y-0.5"
           >
             <LogOut className="w-4 h-4" />
             Cerrar Sesión
@@ -226,30 +263,30 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* BARRA SUPERIOR DE ACCIONES */}
-        <header className="flex items-center justify-between h-20 px-6 lg:px-8 bg-white/90 dark:bg-[#0e1427]/75 backdrop-blur-xl border-b border-zinc-100 dark:border-zinc-900/60 z-30">
+        <header ref={headerRef} className="flex items-center justify-between h-20 px-6 lg:px-8 bg-card/95 backdrop-blur-xl border-b border-border/60 z-30">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 lg:hidden text-zinc-700 dark:text-zinc-300"
+              className="p-2 rounded-xl border border-border hover:bg-secondary lg:hidden text-foreground transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-bold text-zinc-950 dark:text-white hidden sm:block">
+            <h2 className="text-lg font-bold text-foreground hidden sm:block">
               {pathname === '/' ? 'Dashboard General' : pathname.replace('/', '').toUpperCase()}
             </h2>
           </div>
 
           {/* ACCIONES DEL TOPBAR */}
           <div className="flex items-center gap-4">
-            <button className="relative p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-850 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-300 transition-all">
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-[#0e0e0e]" />
+            <button className="relative p-2.5 rounded-xl border border-border bg-secondary hover:bg-secondary/80 text-foreground transition-all duration-300 hover:-translate-y-0.5">
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-destructive rounded-full ring-2 ring-card" />
               <Bell className="w-5 h-5" />
             </button>
             
-            <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-850" />
+            <div className="h-8 w-px bg-border" />
             
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 hidden md:block">
+              <span className="text-sm font-semibold text-foreground hidden md:block">
                 Soporte en Línea
               </span>
               <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
@@ -258,7 +295,7 @@ export default function DashboardLayout({
         </header>
 
         {/* PÁGINAS DENTRO DEL DASHBOARD */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <main ref={contentRef} className="flex-1 overflow-y-auto p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-8">
             {children}
           </div>

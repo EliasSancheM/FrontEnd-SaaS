@@ -1,33 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  /* Paleta Premium basada en Slate y Esmeralda */
-  --color-border: hsl(210 20% 90%);
-  --color-input: hsl(210 20% 90%);
-  --color-ring: hsl(142.1 76.2% 36.3%);
-  --color-background: hsl(210 30% 98%);
-  --color-foreground: hsl(220 15% 12%);
+  /* Paleta Premium "SaaS Moderno" (Claro por defecto) */
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(250 89% 65%);
+  --color-background: hsl(0 0% 99%);
+  --color-foreground: hsl(222 47% 11%);
 
-  --color-primary: hsl(142.1 76.2% 36.3%); /* Emerald Premium */
-  --color-primary-foreground: hsl(355.7 100% 97.3%);
+  --color-primary: hsl(250 89% 65%); /* Electric Indigo */
+  --color-primary-foreground: hsl(0 0% 100%);
 
-  --color-secondary: hsl(210 20% 95%);
-  --color-secondary-foreground: hsl(220 15% 15%);
+  --color-secondary: hsl(210 40% 96%);
+  --color-secondary-foreground: hsl(222 47% 11%);
 
-  --color-muted: hsl(210 20% 95%);
-  --color-muted-foreground: hsl(220 10% 46%);
+  --color-muted: hsl(210 40% 96%);
+  --color-muted-foreground: hsl(215 16% 47%);
 
-  --color-accent: hsl(210 20% 95%);
-  --color-accent-foreground: hsl(220 15% 15%);
+  --color-accent: hsl(190 90% 50%); /* Bright Cyan */
+  --color-accent-foreground: hsl(0 0% 10%);
 
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-destructive: hsl(348 83% 58%); /* Vibrant Red/Pink */
+  --color-destructive-foreground: hsl(0 0% 100%);
 
   --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(220 15% 12%);
+  --color-card-foreground: hsl(222 47% 11%);
 
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(220 15% 12%);
+  --color-popover-foreground: hsl(222 47% 11%);
   
   --radius-lg: 1rem;
   --radius-md: 0.75rem;
@@ -36,25 +36,32 @@
 
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-background: hsl(220 25% 10%); /* Softer, warmer luxurious deep navy slate */
-    --color-foreground: hsl(210 20% 98%);
-    --color-card: hsl(220 24% 13%);       /* Warm navy slate cards */
-    --color-card-foreground: hsl(210 20% 98%);
-    --color-popover: hsl(220 24% 13%);
-    --color-popover-foreground: hsl(210 20% 98%);
-    --color-primary: hsl(142.1 70.6% 45.3%);
-    --color-primary-foreground: hsl(220 25% 10%);
-    --color-secondary: hsl(220 20% 17%);
-    --color-secondary-foreground: hsl(210 20% 98%);
-    --color-muted: hsl(220 20% 17%);
-    --color-muted-foreground: hsl(215 15% 65%);
-    --color-accent: hsl(220 20% 17%);
-    --color-accent-foreground: hsl(210 20% 98%);
-    --color-destructive: hsl(0 62.8% 30.6%);
-    --color-destructive-foreground: hsl(0 0% 98%);
-    --color-border: hsl(220 20% 18%);      /* Softer warmer borders */
-    --color-input: hsl(220 20% 18%);
-    --color-ring: hsl(142.1 70.6% 45.3%);
+    /* Modo Oscuro Profundo (Deep Midnight & Neon) */
+    --color-background: hsl(222 47% 6%); /* Deep Space Blue/Black */
+    --color-foreground: hsl(210 40% 98%);
+    --color-card: hsl(222 47% 8%); /* Slightly lighter than bg */
+    --color-card-foreground: hsl(210 40% 98%);
+    --color-popover: hsl(222 47% 8%);
+    --color-popover-foreground: hsl(210 40% 98%);
+    
+    --color-primary: hsl(250 100% 70%); /* Neon Purple/Indigo */
+    --color-primary-foreground: hsl(222 47% 6%);
+    
+    --color-secondary: hsl(222 47% 12%);
+    --color-secondary-foreground: hsl(210 40% 98%);
+    
+    --color-muted: hsl(222 47% 12%);
+    --color-muted-foreground: hsl(215 20% 65%);
+    
+    --color-accent: hsl(190 100% 55%); /* Neon Cyan */
+    --color-accent-foreground: hsl(222 47% 6%);
+    
+    --color-destructive: hsl(348 90% 60%);
+    --color-destructive-foreground: hsl(210 40% 98%);
+    
+    --color-border: hsl(222 47% 16%);
+    --color-input: hsl(222 47% 16%);
+    --color-ring: hsl(250 100% 70%);
   }
 }
 
@@ -72,30 +79,62 @@ body {
 /* Ambient floating gradient orbs animations */
 @keyframes drift {
   0%, 100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate(0px, 0px) scale(1) rotate(0deg);
   }
   33% {
-    transform: translate(45px, -65px) scale(1.15);
+    transform: translate(30px, -50px) scale(1.1) rotate(15deg);
   }
   66% {
-    transform: translate(-35px, 35px) scale(0.9);
+    transform: translate(-20px, 20px) scale(0.9) rotate(-15deg);
   }
 }
 
 @keyframes drift-reverse {
   0%, 100% {
-    transform: translate(0px, 0px) scale(1.1);
+    transform: translate(0px, 0px) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate(-55px, 55px) scale(0.85);
+    transform: translate(-40px, 40px) scale(0.85) rotate(-10deg);
   }
 }
 
 .animate-drift-slow {
-  animation: drift 18s infinite ease-in-out;
+  animation: drift 20s infinite ease-in-out;
 }
 
 .animate-drift-reverse {
-  animation: drift-reverse 22s infinite ease-in-out;
+  animation: drift-reverse 25s infinite ease-in-out;
 }
+
+/* Nuevas Utilidades de Animación */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 

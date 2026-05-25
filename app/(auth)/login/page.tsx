@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -10,6 +10,8 @@ import { Mail, Lock, ArrowRight, Loader2, Key, CheckCircle, Building2 } from 'lu
 import { useAuthStore, DEMO_USERS } from '@/lib/authStore';
 import toast from 'react-hot-toast';
 import Login3DShowcase from '@/components/auth/Login3DShowcase';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Ingresa un correo electrónico válido' }),
@@ -23,6 +25,16 @@ export default function LoginPage() {
   const { login, isAuthenticated, isInitialized, initialize } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (containerRef.current) {
+      gsap.fromTo('.gsap-login-item', 
+        { y: 30, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.2 }
+      );
+    }
+  }, { scope: containerRef });
 
   useEffect(() => {
     initialize();
@@ -88,10 +100,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-zinc-950 text-white overflow-hidden grid lg:grid-cols-[1fr_520px] xl:grid-cols-[1fr_580px]">
+    <div className="min-h-screen w-full bg-background text-foreground overflow-hidden grid lg:grid-cols-[1fr_520px] xl:grid-cols-[1fr_580px]">
       
       {/* SECCIÓN IZQUIERDA: WEBGL 3D SHOWCASE (SOLO EN DESKTOP) */}
-      <div className="hidden lg:block relative border-r border-zinc-900">
+      <div className="hidden lg:block relative border-r border-border">
         <Login3DShowcase />
       </div>
 
@@ -99,18 +111,18 @@ export default function LoginPage() {
       <div className="relative flex items-center justify-center p-6 sm:p-10 lg:p-12 xl:p-16 overflow-y-auto max-h-screen min-h-screen">
         
         {/* FONDO DINÁMICO MÓVIL (SOLO PARA PANTALLAS PEQUEÑAS) */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.06),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(30,41,59,0.5),rgba(9,9,11,1))] lg:hidden pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.06),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(30,41,59,0.2),transparent)] lg:hidden pointer-events-none" />
         
-        {/* CONTENEDOR DEL FORMULARIO */}
-        <div className="relative z-10 w-full max-w-md transition-all duration-300 my-auto">
+        {/* CONTENEDOR DEL FORMULARIO CON REF PARA GSAP */}
+        <div ref={containerRef} className="relative z-10 w-full max-w-md transition-all duration-300 my-auto">
         
         {/* CABECERA / LOGO */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-8 gsap-login-item opacity-0">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-emerald-400 text-white font-black text-2xl shadow-xl shadow-emerald-500/25 mb-4 animate-bounce" style={{ animationDuration: '3s' }}>
             F
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Factura<span className="text-emerald-500">SaaS</span>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+            Factura<span className="text-primary">SaaS</span>
           </h1>
           <p className="text-sm text-zinc-400 mt-2 text-center">
             Plataforma Inteligente de Facturación Multi-tenant
@@ -118,16 +130,16 @@ export default function LoginPage() {
         </div>
 
         {/* TARJETA GLASSMORPHIC */}
-        <div className="backdrop-blur-xl bg-zinc-900/40 border border-zinc-800/80 rounded-2xl shadow-2xl p-8 hover:border-zinc-700/50 transition-all duration-300">
+        <div className="gsap-login-item opacity-0 backdrop-blur-xl bg-card/60 border border-border/60 rounded-2xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] dark:shadow-[0_0_50px_-12px_rgba(139,92,246,0.15)] p-8 hover:border-primary/30 transition-all duration-500">
           
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-white">Iniciar Sesión</h2>
+            <h2 className="text-xl font-bold text-card-foreground">Iniciar Sesión</h2>
             <p className="text-xs text-zinc-400 mt-1">Ingresa tus credenciales para acceder a la consola</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* EMAIL */}
-            <div>
+            <div className="gsap-login-item opacity-0">
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Correo Electrónico
               </label>
@@ -138,10 +150,10 @@ export default function LoginPage() {
                 <input
                   type="email"
                   placeholder="nombre@empresa.com"
-                  className={`w-full pl-10 pr-4 py-3 bg-zinc-900/60 border rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-4 transition-all duration-200 ${
+                  className={`w-full pl-10 pr-4 py-3 bg-background/50 border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-4 transition-all duration-200 ${
                     errors.email 
-                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10' 
-                      : 'border-zinc-800 focus:border-emerald-500 focus:ring-emerald-500/10'
+                      ? 'border-destructive/50 focus:border-destructive focus:ring-destructive/10' 
+                      : 'border-border focus:border-primary focus:ring-primary/10'
                   }`}
                   {...register('email')}
                 />
@@ -154,7 +166,7 @@ export default function LoginPage() {
             </div>
 
             {/* PASSWORD */}
-            <div>
+            <div className="gsap-login-item opacity-0">
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   Contraseña
@@ -170,10 +182,10 @@ export default function LoginPage() {
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className={`w-full pl-10 pr-4 py-3 bg-zinc-900/60 border rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-4 transition-all duration-200 ${
+                  className={`w-full pl-10 pr-4 py-3 bg-background/50 border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-4 transition-all duration-200 ${
                     errors.password 
-                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10' 
-                      : 'border-zinc-800 focus:border-emerald-500 focus:ring-emerald-500/10'
+                      ? 'border-destructive/50 focus:border-destructive focus:ring-destructive/10' 
+                      : 'border-border focus:border-primary focus:ring-primary/10'
                   }`}
                   {...register('password')}
                 />
@@ -186,12 +198,12 @@ export default function LoginPage() {
             </div>
 
             {/* RECORDAR SESIÓN */}
-            <div className="flex items-center">
+            <div className="flex items-center gsap-login-item opacity-0">
               <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-zinc-800 bg-zinc-900 text-emerald-500 focus:ring-emerald-500/20 focus:ring-offset-0 focus:outline-none"
+                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary/20 focus:ring-offset-0 focus:outline-none"
               />
               <label htmlFor="remember-me" className="ml-2 block text-xs text-zinc-400 select-none">
                 Mantener mi sesión iniciada
@@ -202,7 +214,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold rounded-xl shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all duration-150 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all duration-300 cursor-pointer hover:-translate-y-0.5 gsap-login-item opacity-0"
             >
               {isLoading ? (
                 <>
@@ -219,17 +231,17 @@ export default function LoginPage() {
           </form>
 
           {/* DIVISOR DE ACCESO RÁPIDO */}
-          <div className="relative my-6">
+          <div className="relative my-6 gsap-login-item opacity-0">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-850" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#121215] px-3 text-zinc-500 tracking-wider font-semibold">Elige una cuenta demo</span>
+              <span className="bg-card px-3 text-muted-foreground tracking-wider font-semibold">Elige una cuenta demo</span>
             </div>
           </div>
 
           {/* SELECTOR DE USUARIOS DEMO */}
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 gsap-login-item opacity-0">
             {DEMO_USERS.map((demoUser) => {
               const colorMap: Record<string, string> = {
                 emerald: 'bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 border-emerald-500/30',
@@ -247,13 +259,13 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => handleDemoLogin(demoUser)}
                   disabled={isLoading}
-                  className={`w-full flex items-center gap-3.5 p-3.5 bg-zinc-850 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-left transition-all duration-200 hover:border-${demoUser.color}-500/30 group disabled:opacity-50 disabled:pointer-events-none`}
+                  className={`w-full flex items-center gap-3.5 p-3.5 bg-secondary/30 hover:bg-secondary border border-border rounded-xl text-left transition-all duration-300 hover:border-primary/30 group disabled:opacity-50 disabled:pointer-events-none hover:-translate-y-1`}
                 >
                   <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${bgMap[demoUser.color] || 'bg-emerald-500'} text-white text-xs font-black shrink-0 shadow-lg`}>
                     {demoUser.initials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-white truncate">{demoUser.name}</p>
+                    <p className="text-xs font-bold text-foreground truncate">{demoUser.name}</p>
                     <p className="text-[10px] text-zinc-400 truncate">{demoUser.company}</p>
                     <p className="text-[10px] text-zinc-500 truncate">{demoUser.email}</p>
                   </div>
@@ -264,9 +276,9 @@ export default function LoginPage() {
           </div>
           
           {/* ENLACE REGISTRO */}
-          <p className="text-center text-xs text-zinc-400 mt-6">
+          <p className="text-center text-xs text-muted-foreground mt-6 gsap-login-item opacity-0">
             ¿No tienes una cuenta aún?{' '}
-            <Link href="/register" className="text-emerald-400 hover:text-emerald-300 font-bold hover:underline transition-all">
+            <Link href="/register" className="text-primary hover:text-primary/80 font-bold hover:underline transition-all">
               Créala aquí gratis
             </Link>
           </p>

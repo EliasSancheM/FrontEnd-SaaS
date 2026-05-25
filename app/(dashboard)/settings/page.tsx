@@ -12,16 +12,18 @@ import {
   AlertTriangle,
   Save,
   ChevronRight,
-  Loader2
+  Loader2,
+  CreditCard
 } from 'lucide-react';
 
 import CompanySection from './CompanySection';
 import IssuerSection from './IssuerSection';
 import BillingSection from './BillingSection';
+import PaymentMethodsSection from './PaymentMethodsSection';
 import AppearanceSection from './AppearanceSection';
 import DangerSection from './DangerSection';
 
-type SettingsSection = 'company' | 'issuer' | 'billing' | 'appearance' | 'danger';
+type SettingsSection = 'company' | 'issuer' | 'billing' | 'payments' | 'appearance' | 'danger';
 
 interface SectionNavItem {
   id: SettingsSection;
@@ -34,6 +36,7 @@ const sections: SectionNavItem[] = [
   { id: 'company', label: 'Perfil de Empresa', icon: Building2, description: 'Datos legales y de contacto' },
   { id: 'issuer', label: 'Datos del Emisor', icon: FileText, description: 'Configuración SII y emisión' },
   { id: 'billing', label: 'Facturación', icon: Receipt, description: 'Moneda, IVA y folios' },
+  { id: 'payments', label: 'Métodos de Pago', icon: CreditCard, description: 'MercadoPago y PayPal' },
   { id: 'appearance', label: 'Apariencia', icon: Palette, description: 'Tema y colores' },
   { id: 'danger', label: 'Zona de Peligro', icon: AlertTriangle, description: 'Acciones destructivas' },
 ];
@@ -222,6 +225,10 @@ export default function SettingsPage() {
 
           {activeSection === 'billing' && (
             <BillingSection form={form} updateForm={updateForm} />
+          )}
+
+          {activeSection === 'payments' && (
+            <PaymentMethodsSection />
           )}
 
           {activeSection === 'appearance' && (
