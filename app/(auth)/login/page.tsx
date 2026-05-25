@@ -9,6 +9,7 @@ import * as z from 'zod';
 import { Mail, Lock, ArrowRight, Loader2, Key, CheckCircle, Building2 } from 'lucide-react';
 import { useAuthStore, DEMO_USERS } from '@/lib/authStore';
 import toast from 'react-hot-toast';
+import Login3DShowcase from '@/components/auth/Login3DShowcase';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Ingresa un correo electrónico válido' }),
@@ -87,17 +88,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-zinc-950">
-      {/* FONDO DINÁMICO CON ORBES FLOTANTES DE LUJO */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.12),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(30,41,59,0.7),rgba(9,9,11,1))]" />
+    <div className="min-h-screen w-full bg-zinc-950 text-white overflow-hidden grid lg:grid-cols-[1fr_520px] xl:grid-cols-[1fr_580px]">
       
-      {/* Orbe Decorativo 1 - Esmeralda */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
-      {/* Orbe Decorativo 2 - Slate */}
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-slate-500/5 rounded-full blur-[150px] animate-pulse pointer-events-none" style={{ animationDuration: '8s' }} />
+      {/* SECCIÓN IZQUIERDA: WEBGL 3D SHOWCASE (SOLO EN DESKTOP) */}
+      <div className="hidden lg:block relative border-r border-zinc-900">
+        <Login3DShowcase />
+      </div>
 
-      {/* CONTENEDOR DE LA TARJETA */}
-      <div className="relative z-10 w-full max-w-md transition-all duration-300">
+      {/* SECCIÓN DERECHA: FORMULARIO DE ACCESO (MÓVIL Y DESKTOP) */}
+      <div className="relative flex items-center justify-center p-6 sm:p-10 lg:p-12 xl:p-16 overflow-y-auto max-h-screen min-h-screen">
+        
+        {/* FONDO DINÁMICO MÓVIL (SOLO PARA PANTALLAS PEQUEÑAS) */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.06),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(30,41,59,0.5),rgba(9,9,11,1))] lg:hidden pointer-events-none" />
+        
+        {/* CONTENEDOR DEL FORMULARIO */}
+        <div className="relative z-10 w-full max-w-md transition-all duration-300 my-auto">
         
         {/* CABECERA / LOGO */}
         <div className="flex flex-col items-center mb-8">
@@ -269,5 +274,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
