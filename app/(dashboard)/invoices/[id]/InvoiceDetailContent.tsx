@@ -46,6 +46,7 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'details' | 'processing' | 'success'>('details');
   const [selectedMethod, setSelectedMethod] = useState<'card' | 'transfer' | 'cash'>('card');
+  const [selectedGateway, setSelectedGateway] = useState<'mercadopago' | 'paypal'>('mercadopago');
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
 
   if (!invoice) {
     return (
-      <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-12 text-center max-w-xl mx-auto shadow-sm">
+      <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl p-12 text-center max-w-xl mx-auto shadow-sm">
         <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-650 flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8" />
         </div>
@@ -95,20 +96,29 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
   };
 
   // Simular pago online
-  const triggerOnlinePayment = () => {
+  const triggerOnlinePayment = (gateway: 'mercadopago' | 'paypal') => {
+    setSelectedGateway(gateway);
     setPaymentStep('details');
     setCheckoutOpen(true);
   };
 
   const executeSimulatedPayment = () => {
     setPaymentStep('processing');
+    const delay = selectedGateway === 'paypal' ? 2400 : 1800;
     setTimeout(() => {
       markInvoiceAsPaid(invoice.id);
       setPaymentStep('success');
-      toast.success('¡Transacción aprobada por MercadoPago!', {
-        icon: '💳'
-      });
-    }, 2000);
+      if (selectedGateway === 'paypal') {
+        const usdAmount = (invoice.amount / 920).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        toast.success(`¡Transacción aprobada por PayPal! Monto: $${usdAmount} USD`, {
+          icon: '🌎'
+        });
+      } else {
+        toast.success('¡Transacción aprobada por Mercado Pago!', {
+          icon: '💳'
+        });
+      }
+    }, delay);
   };
 
   // Eliminar factura
@@ -170,7 +180,7 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
         <div className="space-y-6">
           
           {/* CICLO DE VIDA DEL COBRO */}
-          <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl p-6 shadow-sm space-y-6">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Ciclo de Vida de Facturación
@@ -226,7 +236,7 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
           </div>
 
           {/* PANEL DE OPERACIONES */}
-          <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl p-6 shadow-sm space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Operaciones Disponibles</h3>
             
             {/* Si no está pagada */}
@@ -234,19 +244,27 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
               <div className="space-y-3">
                 {/* Pago MercadoPago */}
                 <button 
-                  onClick={triggerOnlinePayment}
-                  className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 transition-all cursor-pointer text-sm"
+                  onClick={() => triggerOnlinePayment('mercadopago')}
+                  className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold rounded-xl shadow-lg shadow-sky-500/10 hover:shadow-sky-500/25 transition-all duration-200 cursor-pointer text-sm"
                 >
-                  <CreditCard className="w-4.5 h-4.5" />
-                  Pagar con MercadoPago
+                  <CreditCard className="w-4.5 h-4.5 animate-pulse" style={{ animationDuration: '3s' }} />
+                  Pagar con Mercado Pago
+                </button>
+
+                {/* Pago PayPal */}
+                <button 
+                  onClick={() => triggerOnlinePayment('paypal')}
+                  className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-gradient-to-r from-[#ffc439] to-[#ffb300] hover:from-[#ffd269] hover:to-[#ffc439] text-blue-900 font-black rounded-xl shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 transition-all duration-200 cursor-pointer text-sm relative overflow-hidden group"
+                >
+                  <span className="tracking-tight italic text-base">Pay<span className="text-[#003087]">Pal</span></span>
                 </button>
 
                 {/* Pago Manual */}
                 <button 
                   onClick={handleMarkAsPaid}
-                  className="w-full flex items-center justify-center gap-2.5 py-3 px-4 border border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-250 font-bold rounded-xl transition-all cursor-pointer text-sm"
+                  className="w-full flex items-center justify-center gap-2.5 py-2 px-4 border border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-250 font-bold rounded-xl transition-all cursor-pointer text-xs"
                 >
-                  <CheckCircle className="w-4.5 h-4.5 text-emerald-550" />
+                  <CheckCircle className="w-4 h-4 text-emerald-550" />
                   Registrar Pago Manual
                 </button>
               </div>
@@ -445,25 +463,43 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
 
       </div>
 
-      {/* OVERLAY DE PASARELA DE CHECKOUT MERCADOPAGO */}
+      {/* OVERLAY DE PASARELA DE CHECKOUT DUAL (MERCADOPAGO & PAYPAL) */}
       {checkoutOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white border border-zinc-250 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 text-zinc-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 text-zinc-900">
             
-            {/* Cabecera MercadoPago */}
-            <div className="bg-[#00aae4] p-4 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2 font-black tracking-tight">
-                <Smartphone className="w-5 h-5 animate-pulse" />
-                <span>Mercado Pago</span>
+            {/* Cabecera dinámica según Gateway */}
+            {selectedGateway === 'paypal' ? (
+              <div className="bg-[#003087] p-4 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2 font-bold tracking-tight">
+                  <ShieldCheck className="w-5 h-5 text-[#00c4ff]" />
+                  <span className="italic font-black text-lg">Pay<span className="text-[#00c4ff]">Pal</span></span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider ml-1 bg-white/10 px-2 py-0.5 rounded">Checkout</span>
+                </div>
+                <button 
+                  onClick={() => setCheckoutOpen(false)}
+                  className="p-1 rounded-lg hover:bg-white/10 text-white transition-colors"
+                  disabled={paymentStep === 'processing'}
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button 
-                onClick={() => setCheckoutOpen(false)}
-                className="p-1 rounded-lg hover:bg-white/10 text-white transition-colors"
-                disabled={paymentStep === 'processing'}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            ) : (
+              <div className="bg-[#00aae4] p-4 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2 font-black tracking-tight">
+                  <Smartphone className="w-5 h-5 animate-pulse" />
+                  <span>Mercado Pago</span>
+                  <span className="text-[9px] uppercase font-bold tracking-wider ml-1 bg-white/15 px-1.5 py-0.5 rounded">Pasarela Chile</span>
+                </div>
+                <button 
+                  onClick={() => setCheckoutOpen(false)}
+                  className="p-1 rounded-lg hover:bg-white/10 text-white transition-colors"
+                  disabled={paymentStep === 'processing'}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            )}
 
             {/* CUERPO DEL CHECKOUT */}
             <div className="p-6">
@@ -472,49 +508,106 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
                 <div className="space-y-6">
                   {/* Resumen del Concepto */}
                   <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-150 text-sm">
-                    <span className="text-xs text-zinc-450 font-bold block">Pagar a</span>
+                    <span className="text-xs text-zinc-450 font-bold block">Cobrador de Factura</span>
                     <span className="font-bold text-zinc-800 text-base block mt-0.5">FacturaSaaS SpA</span>
                     <div className="h-px bg-zinc-200 my-3" />
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-zinc-500 font-bold">Concepto: Factura {invoice.number}</span>
-                      <span className="font-bold text-zinc-900 text-sm">${invoice.amount.toLocaleString()} CLP</span>
-                    </div>
-                  </div>
-
-                  {/* Selector de Medios de Pago */}
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Selecciona Medio de Pago</h4>
                     
-                    <button 
-                      onClick={() => setSelectedMethod('card')}
-                      className={`w-full flex items-center gap-3 p-3.5 border rounded-xl text-left transition-all ${
-                        selectedMethod === 'card' 
-                          ? 'border-[#00aae4] bg-sky-500/5 font-bold' 
-                          : 'border-zinc-200 hover:bg-zinc-50'
-                      }`}
-                    >
-                      <CardIcon className="w-5 h-5 text-[#00aae4]" />
-                      <div>
-                        <p className="text-xs text-zinc-900">Tarjeta de Crédito / Débito</p>
-                        <p className="text-[10px] text-zinc-400 font-normal">Hasta 12 cuotas sin interés</p>
+                    {selectedGateway === 'paypal' ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-zinc-500">Monto Factura (CLP):</span>
+                          <span className="font-bold text-zinc-700">${invoice.amount.toLocaleString()} CLP</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-zinc-500">Tasa de Cambio:</span>
+                          <span className="font-semibold text-zinc-650">1 USD = 920 CLP</span>
+                        </div>
+                        <div className="h-px bg-zinc-100 my-1" />
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-900 font-bold text-xs">Total a pagar en USD:</span>
+                          <span className="font-black text-[#003087] text-lg">
+                            ${(invoice.amount / 920).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
+                          </span>
+                        </div>
                       </div>
-                    </button>
-
-                    <button 
-                      onClick={() => setSelectedMethod('transfer')}
-                      className={`w-full flex items-center gap-3 p-3.5 border rounded-xl text-left transition-all ${
-                        selectedMethod === 'transfer' 
-                          ? 'border-[#00aae4] bg-sky-500/5 font-bold' 
-                          : 'border-zinc-200 hover:bg-zinc-50'
-                      }`}
-                    >
-                      <Smartphone className="w-5 h-5 text-emerald-550" />
-                      <div>
-                        <p className="text-xs text-zinc-900">Transferencia Electrónica (Webpay/Khipu)</p>
-                        <p className="text-[10px] text-zinc-400 font-normal">Acreditación instantánea 100% segura</p>
+                    ) : (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-zinc-500 font-bold">Concepto: Factura {invoice.number}</span>
+                        <span className="font-bold text-zinc-900 text-sm">${invoice.amount.toLocaleString()} CLP</span>
                       </div>
-                    </button>
+                    )}
                   </div>
+
+                  {/* Selector de Medios de Pago según Gateway */}
+                  {selectedGateway === 'paypal' ? (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Medio de Pago PayPal</h4>
+                      
+                      <button 
+                        onClick={() => setSelectedMethod('card')}
+                        className={`w-full flex items-center gap-3 p-3.5 border rounded-xl text-left transition-all ${
+                          selectedMethod === 'card' 
+                            ? 'border-[#003087] bg-blue-500/5 font-bold' 
+                            : 'border-zinc-200 hover:bg-zinc-50'
+                        }`}
+                      >
+                        <ShieldCheck className="w-5 h-5 text-[#003087]" />
+                        <div>
+                          <p className="text-xs text-zinc-900">Saldo PayPal o Cuenta Bancaria</p>
+                          <p className="text-[10px] text-zinc-400 font-normal">Paga seguro con tu cuenta de PayPal</p>
+                        </div>
+                      </button>
+
+                      <button 
+                        onClick={() => setSelectedMethod('transfer')}
+                        className={`w-full flex items-center gap-3 p-3.5 border rounded-xl text-left transition-all ${
+                          selectedMethod === 'transfer' 
+                            ? 'border-[#003087] bg-blue-500/5 font-bold' 
+                            : 'border-zinc-200 hover:bg-zinc-50'
+                        }`}
+                      >
+                        <CardIcon className="w-5 h-5 text-amber-550" />
+                        <div>
+                          <p className="text-xs text-zinc-900">Tarjeta de Crédito Internacional</p>
+                          <p className="text-[10px] text-zinc-400 font-normal">Visa, Mastercard, American Express, Discover</p>
+                        </div>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Selecciona Medio de Pago</h4>
+                      
+                      <button 
+                        onClick={() => setSelectedMethod('card')}
+                        className={`w-full flex items-center gap-3 p-3.5 border rounded-xl text-left transition-all ${
+                          selectedMethod === 'card' 
+                            ? 'border-[#00aae4] bg-sky-500/5 font-bold' 
+                            : 'border-zinc-200 hover:bg-zinc-50'
+                        }`}
+                      >
+                        <CardIcon className="w-5 h-5 text-[#00aae4]" />
+                        <div>
+                          <p className="text-xs text-zinc-900">Tarjeta de Crédito / Débito</p>
+                          <p className="text-[10px] text-zinc-400 font-normal">Hasta 12 cuotas sin interés</p>
+                        </div>
+                      </button>
+
+                      <button 
+                        onClick={() => setSelectedMethod('transfer')}
+                        className={`w-full flex items-center gap-3 p-3.5 border rounded-xl text-left transition-all ${
+                          selectedMethod === 'transfer' 
+                            ? 'border-[#00aae4] bg-sky-500/5 font-bold' 
+                            : 'border-zinc-200 hover:bg-zinc-50'
+                        }`}
+                      >
+                        <Smartphone className="w-5 h-5 text-emerald-550" />
+                        <div>
+                          <p className="text-xs text-zinc-900">Transferencia Electrónica (Webpay/Khipu)</p>
+                          <p className="text-[10px] text-zinc-400 font-normal">Acreditación instantánea 100% segura</p>
+                        </div>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Aviso de Seguridad */}
                   <div className="flex items-center gap-2 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-[10px] text-emerald-700">
@@ -522,21 +615,32 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
                     <span>Tu transacción cuenta con cifrado SSL bancario e inspección antifraude activa.</span>
                   </div>
 
-                  {/* Botón Pagar */}
-                  <button 
-                    onClick={executeSimulatedPayment}
-                    className="w-full py-3 bg-[#00aae4] hover:bg-[#009bd1] active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-sky-500/20 transition-all cursor-pointer text-sm"
-                  >
-                    Confirmar y Pagar ${invoice.amount.toLocaleString()} CLP
-                  </button>
+                  {/* Botón Pagar Dinámico */}
+                  {selectedGateway === 'paypal' ? (
+                    <button 
+                      onClick={executeSimulatedPayment}
+                      className="w-full py-3 bg-[#ffc439] hover:bg-[#ffb300] active:scale-[0.98] text-[#003087] font-extrabold rounded-xl shadow-lg shadow-amber-500/10 transition-all cursor-pointer text-sm flex items-center justify-center gap-1.5"
+                    >
+                      Pagar con <span className="italic font-black">PayPal</span> USD
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={executeSimulatedPayment}
+                      className="w-full py-3 bg-[#00aae4] hover:bg-[#009bd1] active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-sky-500/20 transition-all cursor-pointer text-sm"
+                    >
+                      Confirmar y Pagar ${invoice.amount.toLocaleString()} CLP
+                    </button>
+                  )}
                 </div>
               )}
 
               {paymentStep === 'processing' && (
                 <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
-                  <Loader2 className="w-10 h-10 animate-spin text-[#00aae4]" />
+                  <Loader2 className={`w-10 h-10 animate-spin ${selectedGateway === 'paypal' ? 'text-[#003087]' : 'text-[#00aae4]'}`} />
                   <div>
-                    <h4 className="font-bold text-zinc-900">Procesando transacción bancaria...</h4>
+                    <h4 className="font-bold text-zinc-900">
+                      {selectedGateway === 'paypal' ? 'Conectando de forma segura con PayPal...' : 'Procesando transacción bancaria...'}
+                    </h4>
                     <p className="text-xs text-zinc-500 mt-1">Espera un momento, no cierres la ventana.</p>
                   </div>
                 </div>
@@ -550,7 +654,9 @@ export default function InvoiceDetailContent({ params }: InvoiceDetailPageProps)
                   <div>
                     <h4 className="font-extrabold text-zinc-950 text-lg">¡Pago Recibido Exitosamente!</h4>
                     <p className="text-xs text-zinc-500 mt-1 max-w-[285px] leading-relaxed mx-auto">
-                      La factura ha sido liquidada en el sistema. Recibirás tu comprobante tributario y acuse de recibo del SII en tu correo.
+                      {selectedGateway === 'paypal' 
+                        ? 'La factura ha sido liquidada en el sistema mediante PayPal. Recibirás tu acuse de recibo y comprobante en USD.' 
+                        : 'La factura ha sido liquidada en el sistema mediante Mercado Pago. Recibirás tu comprobante tributario y acuse de recibo del SII en tu correo.'}
                     </p>
                   </div>
                   <button 
