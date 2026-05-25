@@ -90,7 +90,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 dark:bg-[#0a0a0a] overflow-hidden">
+    <div className="flex h-screen bg-zinc-50/10 dark:bg-[#0a0f1d]/20 backdrop-blur-[4px] overflow-hidden">
       
       {/* --- SIDEBAR RESPONSIVO PARA MÓVIL --- */}
       {sidebarOpen && (
@@ -101,8 +101,8 @@ export default function DashboardLayout({
       )}
 
       <aside className={`
-        fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-white dark:bg-[#0e0e0e] 
-        border-r border-zinc-100 dark:border-zinc-900 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-white/90 dark:bg-[#0e1427]/75 backdrop-blur-xl 
+        border-r border-zinc-100 dark:border-zinc-900/60 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         
@@ -226,7 +226,7 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* BARRA SUPERIOR DE ACCIONES */}
-        <header className="flex items-center justify-between h-20 px-6 lg:px-8 bg-white dark:bg-[#0e0e0e] border-b border-zinc-100 dark:border-zinc-900 z-30">
+        <header className="flex items-center justify-between h-20 px-6 lg:px-8 bg-white/90 dark:bg-[#0e1427]/75 backdrop-blur-xl border-b border-zinc-100 dark:border-zinc-900/60 z-30">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(true)}

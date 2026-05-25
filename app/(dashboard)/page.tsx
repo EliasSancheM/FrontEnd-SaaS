@@ -26,7 +26,7 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, change, isPositive, icon: Icon, color }: MetricCardProps) {
   return (
-    <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+    <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-305 hover:-translate-y-0.5 group">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">{title}</span>
         <div className={`p-3 rounded-xl ${color} transition-transform duration-300 group-hover:scale-105`}>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
       <div className="grid gap-8 lg:grid-cols-3">
         
         {/* TABLA DE FACTURAS RECIENTES */}
-        <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl shadow-sm p-6 lg:col-span-2">
+        <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl shadow-sm p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Últimas Facturas</h3>
@@ -208,7 +208,7 @@ export default function DashboardPage() {
           </div>
 
           {/* TARJETA DE REPORTE TRIBUTARIO */}
-          <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl p-6 shadow-sm">
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-4">
               Impuestos Estimados (IVA)
             </h4>

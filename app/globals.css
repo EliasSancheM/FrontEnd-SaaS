@@ -2,32 +2,32 @@
 
 @theme {
   /* Paleta Premium basada en Slate y Esmeralda */
-  --color-border: hsl(240 5.9% 90%);
-  --color-input: hsl(240 5.9% 90%);
+  --color-border: hsl(210 20% 90%);
+  --color-input: hsl(210 20% 90%);
   --color-ring: hsl(142.1 76.2% 36.3%);
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(240 10% 3.9%);
+  --color-background: hsl(210 30% 98%);
+  --color-foreground: hsl(220 15% 12%);
 
   --color-primary: hsl(142.1 76.2% 36.3%); /* Emerald Premium */
   --color-primary-foreground: hsl(355.7 100% 97.3%);
 
-  --color-secondary: hsl(240 4.8% 95.9%);
-  --color-secondary-foreground: hsl(240 5.9% 10%);
+  --color-secondary: hsl(210 20% 95%);
+  --color-secondary-foreground: hsl(220 15% 15%);
 
-  --color-muted: hsl(240 4.8% 95.9%);
-  --color-muted-foreground: hsl(240 3.8% 46.1%);
+  --color-muted: hsl(210 20% 95%);
+  --color-muted-foreground: hsl(220 10% 46%);
 
-  --color-accent: hsl(240 4.8% 95.9%);
-  --color-accent-foreground: hsl(240 5.9% 10%);
+  --color-accent: hsl(210 20% 95%);
+  --color-accent-foreground: hsl(220 15% 15%);
 
   --color-destructive: hsl(0 84.2% 60.2%);
   --color-destructive-foreground: hsl(0 0% 98%);
 
   --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(240 10% 3.9%);
+  --color-card-foreground: hsl(220 15% 12%);
 
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(240 10% 3.9%);
+  --color-popover-foreground: hsl(220 15% 12%);
   
   --radius-lg: 1rem;
   --radius-md: 0.75rem;
@@ -36,24 +36,24 @@
 
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-background: hsl(240 10% 3.9%);
-    --color-foreground: hsl(0 0% 98%);
-    --color-card: hsl(240 10% 3.9%);
-    --color-card-foreground: hsl(0 0% 98%);
-    --color-popover: hsl(240 10% 3.9%);
-    --color-popover-foreground: hsl(0 0% 98%);
+    --color-background: hsl(220 25% 10%); /* Softer, warmer luxurious deep navy slate */
+    --color-foreground: hsl(210 20% 98%);
+    --color-card: hsl(220 24% 13%);       /* Warm navy slate cards */
+    --color-card-foreground: hsl(210 20% 98%);
+    --color-popover: hsl(220 24% 13%);
+    --color-popover-foreground: hsl(210 20% 98%);
     --color-primary: hsl(142.1 70.6% 45.3%);
-    --color-primary-foreground: hsl(240 5.9% 10%);
-    --color-secondary: hsl(240 3.7% 15.9%);
-    --color-secondary-foreground: hsl(0 0% 98%);
-    --color-muted: hsl(240 3.7% 15.9%);
-    --color-muted-foreground: hsl(240 5% 64.9%);
-    --color-accent: hsl(240 3.7% 15.9%);
-    --color-accent-foreground: hsl(0 0% 98%);
+    --color-primary-foreground: hsl(220 25% 10%);
+    --color-secondary: hsl(220 20% 17%);
+    --color-secondary-foreground: hsl(210 20% 98%);
+    --color-muted: hsl(220 20% 17%);
+    --color-muted-foreground: hsl(215 15% 65%);
+    --color-accent: hsl(220 20% 17%);
+    --color-accent-foreground: hsl(210 20% 98%);
     --color-destructive: hsl(0 62.8% 30.6%);
     --color-destructive-foreground: hsl(0 0% 98%);
-    --color-border: hsl(240 3.7% 15.9%);
-    --color-input: hsl(240 3.7% 15.9%);
+    --color-border: hsl(220 20% 18%);      /* Softer warmer borders */
+    --color-input: hsl(220 20% 18%);
     --color-ring: hsl(142.1 70.6% 45.3%);
   }
 }
@@ -66,5 +66,36 @@ body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
+
+/* Ambient floating gradient orbs animations */
+@keyframes drift {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(45px, -65px) scale(1.15);
+  }
+  66% {
+    transform: translate(-35px, 35px) scale(0.9);
+  }
+}
+
+@keyframes drift-reverse {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1.1);
+  }
+  50% {
+    transform: translate(-55px, 55px) scale(0.85);
+  }
+}
+
+.animate-drift-slow {
+  animation: drift 18s infinite ease-in-out;
+}
+
+.animate-drift-reverse {
+  animation: drift-reverse 22s infinite ease-in-out;
+}
+
