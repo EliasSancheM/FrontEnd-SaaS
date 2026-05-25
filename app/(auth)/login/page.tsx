@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mail, Lock, ArrowRight, Loader2, Key, CheckCircle } from 'lucide-react';
-import { useAuthStore } from '@/lib/authStore';
+import { Mail, Lock, ArrowRight, Loader2, Key, CheckCircle, Building2 } from 'lucide-react';
+import { useAuthStore, DEMO_USERS } from '@/lib/authStore';
 import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
@@ -65,23 +65,23 @@ export default function LoginPage() {
     }
   };
 
-  // Función para autocompletar e iniciar sesión rápidamente
-  const handleQuickAccess = async () => {
+  // Función para login con usuario demo seleccionado
+  const handleDemoLogin = async (demoUser: typeof DEMO_USERS[0]) => {
     setIsLoading(true);
-    setValue('email', 'elias@misaas.cl');
-    setValue('password', '123456');
+    setValue('email', demoUser.email);
+    setValue('password', demoUser.password);
     
     try {
-      toast.loading('Inyectando credenciales de prueba...', { id: 'demo-auth', duration: 800 });
-      const success = await login('elias@misaas.cl', 'Elías Sánchez', 'Mi Empresa SaaS SpA');
+      toast.loading(`Ingresando como ${demoUser.name}...`, { id: 'demo-auth', duration: 800 });
+      const success = await login(demoUser.email, demoUser.name, demoUser.company);
       if (success) {
         setTimeout(() => {
-          toast.success('¡Acceso rápido concedido! Redirigiendo...', { id: 'demo-auth' });
+          toast.success(`¡Bienvenido, ${demoUser.name.split(' ')[0]}!`, { id: 'demo-auth' });
           router.push('/');
         }, 800);
       }
     } catch (error) {
-      toast.error('Error en el acceso demo rápido', { id: 'demo-auth' });
+      toast.error('Error en el acceso demo', { id: 'demo-auth' });
       setIsLoading(false);
     }
   };
@@ -219,28 +219,44 @@ export default function LoginPage() {
               <div className="w-full border-t border-zinc-850" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#121215] px-3 text-zinc-500 tracking-wider font-semibold">O prueba rápido</span>
+              <span className="bg-[#121215] px-3 text-zinc-500 tracking-wider font-semibold">Elige una cuenta demo</span>
             </div>
           </div>
 
-          {/* ACCESO DEMO RÁPIDO */}
-          <button
-            type="button"
-            onClick={handleQuickAccess}
-            disabled={isLoading}
-            className="w-full flex items-center justify-between p-3.5 bg-zinc-850 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-left transition-all duration-200 hover:border-emerald-500/30 group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 transition-all">
-                <Key className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-white">Acceso Demo Rápido</p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">Ingresar al instante sin escribir</p>
-              </div>
-            </div>
-            <CheckCircle className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
-          </button>
+          {/* SELECTOR DE USUARIOS DEMO */}
+          <div className="space-y-2.5">
+            {DEMO_USERS.map((demoUser) => {
+              const colorMap: Record<string, string> = {
+                emerald: 'bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 border-emerald-500/30',
+                blue: 'bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 border-blue-500/30',
+                violet: 'bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 border-violet-500/30',
+              };
+              const bgMap: Record<string, string> = {
+                emerald: 'bg-emerald-500',
+                blue: 'bg-blue-500',
+                violet: 'bg-violet-500',
+              };
+              return (
+                <button
+                  key={demoUser.email}
+                  type="button"
+                  onClick={() => handleDemoLogin(demoUser)}
+                  disabled={isLoading}
+                  className={`w-full flex items-center gap-3.5 p-3.5 bg-zinc-850 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-left transition-all duration-200 hover:border-${demoUser.color}-500/30 group disabled:opacity-50 disabled:pointer-events-none`}
+                >
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${bgMap[demoUser.color] || 'bg-emerald-500'} text-white text-xs font-black shrink-0 shadow-lg`}>
+                    {demoUser.initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-white truncate">{demoUser.name}</p>
+                    <p className="text-[10px] text-zinc-400 truncate">{demoUser.company}</p>
+                    <p className="text-[10px] text-zinc-500 truncate">{demoUser.email}</p>
+                  </div>
+                  <ArrowRight className={`w-4 h-4 text-zinc-600 group-hover:text-${demoUser.color}-400 transition-colors shrink-0`} />
+                </button>
+              );
+            })}
+          </div>
           
           {/* ENLACE REGISTRO */}
           <p className="text-center text-xs text-zinc-400 mt-6">

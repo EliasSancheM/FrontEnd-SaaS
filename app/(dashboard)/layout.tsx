@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/authStore';
+import { useSaaSStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 import { 
   LayoutDashboard, 
@@ -43,10 +44,18 @@ export default function DashboardLayout({
   const router = useRouter();
 
   const { user, isAuthenticated, isInitialized, initialize, logout } = useAuthStore();
+  const saasStore = useSaaSStore();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Initialize SaaS store with user's data when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.email) {
+      saasStore.reinitialize(user.email);
+    }
+  }, [isAuthenticated, user?.email]);
 
   useEffect(() => {
     if (isInitialized && !isAuthenticated) {
@@ -68,9 +77,16 @@ export default function DashboardLayout({
     );
   }
 
+  const handleLogout = () => {
+    saasStore.clearContext();
+    logout();
+    toast.success('Sesión cerrada correctamente');
+    router.push('/login');
+  };
+
   const activeTenant = {
     name: user?.company || 'Mi Empresa SaaS',
-    taxId: user?.email === 'elias@misaas.cl' ? 'RUT: 77.654.321-K' : 'RUT: 76.845.912-K',
+    taxId: user?.email || '',
   };
 
   return (
@@ -197,11 +213,7 @@ export default function DashboardLayout({
             </div>
           </div>
           <button 
-            onClick={() => {
-              logout();
-              toast.success('Sesión cerrada correctamente');
-              router.push('/login');
-            }}
+            onClick={handleLogout}
             className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-red-200 hover:border-red-300 bg-red-500/5 hover:bg-red-500/10 text-red-600 dark:border-red-950 dark:bg-red-950/20 dark:text-red-400 text-sm font-semibold transition-all duration-200 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
