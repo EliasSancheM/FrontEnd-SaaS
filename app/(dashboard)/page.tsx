@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import FloatingCard3D from '@/components/dashboard/FloatingCard3D';
 import { useSaaSStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/authStore';
 
 interface MetricCardProps {
   title: string;
@@ -47,6 +48,7 @@ function MetricCard({ title, value, change, isPositive, icon: Icon, color }: Met
 
 export default function DashboardPage() {
   const { clients, invoices, initialize, isInitialized } = useSaaSStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     initialize();
@@ -70,6 +72,9 @@ export default function DashboardPage() {
     statusLabel: inv.statusLabel
   }));
 
+  const userName = user?.name ? user.name.split(' ')[0] : 'Usuario';
+  const companyName = user?.company || 'tu empresa';
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
@@ -77,10 +82,10 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            ¡Hola, Elías!
+            ¡Hola, {userName}!
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            Aquí tienes el resumen financiero y facturación de **Mi Empresa SaaS** para hoy.
+            Aquí tienes el resumen financiero y facturación de <span className="font-semibold text-zinc-800 dark:text-zinc-200">{companyName}</span> para hoy.
           </p>
         </div>
         <div>
