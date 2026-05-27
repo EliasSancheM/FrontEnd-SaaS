@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from './api';
 
 export interface UserProfile {
   name: string;
@@ -43,8 +44,8 @@ interface AuthStore {
   companySettings: CompanySettings;
   
   initialize: () => void;
-  login: (email: string, name?: string, company?: string) => Promise<boolean>;
-  register: (email: string, name: string, company: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, name: string, company: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
   updateCompanySettings: (updates: Partial<CompanySettings>) => void;
@@ -210,108 +211,143 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   initialize: () => {
     if (typeof window === 'undefined' || get().isInitialized) return;
-    
-    const storedUser = localStorage.getItem('auth_user');
-    const storedAuth = localStorage.getItem('auth_authenticated');
-    
-    if (storedUser && storedAuth === 'true') {
-      const user: UserProfile = JSON.parse(storedUser);
+
+    const token = localStorage.getItem('auth_token');
+
+    if (!token) {
+      set({ isInitialized: true });
+      return;
+    }
+
+    api.get('/me')
+      .then((response) => {
+        const userData = response.data;
+        const user: UserProfile = {
+          name: userData.name,
+          email: userData.email,
+          role: userData.roles?.[0]?.name || 'Administrador',
+          company: userData.tenant?.name || 'Mi Empresa',
+        };
+
+        const userId = user.email;
+        const storedSettings = localStorage.getItem(settingsKey(userId));
+        const settings = storedSettings
+          ? { ...getDefaultSettings(userId), ...JSON.parse(storedSettings) }
+          : getDefaultSettings(userId);
+
+        localStorage.setItem('auth_user', JSON.stringify(user));
+
+        set({
+          user,
+          isAuthenticated: true,
+          isInitialized: true,
+          companySettings: settings,
+        });
+      })
+      .catch(() => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        set({
+          user: null,
+          isAuthenticated: false,
+          isInitialized: true,
+          companySettings: DEFAULT_SETTINGS,
+        });
+      });
+  },
+
+  login: async (email, password) => {
+    try {
+      const response = await api.post('/login', { email, password });
+      const { token, user: userData } = response.data;
+
+      const user: UserProfile = {
+        name: userData.name,
+        email: userData.email,
+        role: userData.roles?.[0]?.name || 'Administrador',
+        company: userData.tenant?.name || 'Mi Empresa',
+      };
+
       const userId = user.email;
-      
-      const storedSettings = localStorage.getItem(settingsKey(userId));
-      const settings = storedSettings 
+      const storedSettings = typeof window !== 'undefined'
+        ? localStorage.getItem(settingsKey(userId))
+        : null;
+      const settings = storedSettings
         ? { ...getDefaultSettings(userId), ...JSON.parse(storedSettings) }
         : getDefaultSettings(userId);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('auth_user', JSON.stringify(user));
+      }
 
       set({
         user,
         isAuthenticated: true,
-        isInitialized: true,
-        companySettings: settings
+        companySettings: settings,
       });
-    } else {
+
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  register: async (email, name, company, password) => {
+    try {
+      const response = await api.post('/register', {
+        company_name: company,
+        name,
+        email,
+        password,
+        password_confirmation: password,
+      });
+      const { token, user: userData } = response.data;
+
+      const user: UserProfile = {
+        name: userData.name,
+        email: userData.email,
+        role: userData.roles?.[0]?.name || 'Administrador',
+        company: userData.tenant?.name || company,
+      };
+
+      const userId = user.email;
+      const settings = getDefaultSettings(userId);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('auth_user', JSON.stringify(user));
+      }
+
       set({
-        user: null,
-        isAuthenticated: false,
-        isInitialized: true,
-        companySettings: DEFAULT_SETTINGS
+        user,
+        isAuthenticated: true,
+        companySettings: { ...settings, companyName: company },
       });
+
+      return true;
+    } catch {
+      return false;
     }
   },
 
-  login: async (email, name, company) => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Check if it's a demo user for auto-fill
-    const demoUser = DEMO_USERS.find(u => u.email === email);
-
-    const finalUser: UserProfile = {
-      name: name || demoUser?.name || email.split('@')[0],
-      email: email,
-      role: 'Administrador',
-      company: company || demoUser?.company || 'Mi Empresa'
-    };
-
-    const userId = finalUser.email;
-    const storedSettings = typeof window !== 'undefined' 
-      ? localStorage.getItem(settingsKey(userId)) 
-      : null;
-    const settings = storedSettings 
-      ? { ...getDefaultSettings(userId), ...JSON.parse(storedSettings) }
-      : getDefaultSettings(userId);
-
-    set({
-      user: finalUser,
-      isAuthenticated: true,
-      companySettings: settings
-    });
+  logout: async () => {
+    try {
+      await api.post('/logout');
+    } catch {
+      // Continue even if the API call fails
+    }
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_user', JSON.stringify(finalUser));
-      localStorage.setItem('auth_authenticated', 'true');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
     }
 
-    return true;
-  },
-
-  register: async (email, name, company) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const finalUser: UserProfile = {
-      name: name,
-      email: email,
-      role: 'Administrador',
-      company: company
-    };
-
-    const userId = finalUser.email;
-    const settings = getDefaultSettings(userId);
-
-    set({
-      user: finalUser,
-      isAuthenticated: true,
-      companySettings: { ...settings, companyName: company }
-    });
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_user', JSON.stringify(finalUser));
-      localStorage.setItem('auth_authenticated', 'true');
-    }
-
-    return true;
-  },
-
-  logout: () => {
     set({
       user: null,
       isAuthenticated: false,
-      companySettings: DEFAULT_SETTINGS
+      companySettings: DEFAULT_SETTINGS,
     });
-
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_user');
-      localStorage.removeItem('auth_authenticated');
-    }
   },
 
   updateProfile: (updates) => {
@@ -344,5 +380,5 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (typeof window !== 'undefined' && userId) {
       localStorage.removeItem(settingsKey(userId));
     }
-  }
+  },
 }));

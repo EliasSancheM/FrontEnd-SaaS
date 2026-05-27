@@ -5,7 +5,7 @@ import axios from 'axios';
  * con la API de Laravel (Sanctum/Tokens)
  */
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
   withCredentials: true, // Requerido para almacenar/enviar cookies HTTPOnly de Laravel
   headers: {
     'Content-Type': 'application/json',
@@ -36,7 +36,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       // Redirigir al login si el token expira o es inválido
       localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      window.location.href = `${basePath}/login`;
     }
     return Promise.reject(error);
   }

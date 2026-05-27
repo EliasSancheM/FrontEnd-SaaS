@@ -114,9 +114,9 @@ export default function DashboardLayout({
     );
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     saasStore.clearContext();
-    logout();
+    await logout();
     toast.success('Sesión cerrada correctamente');
     router.push('/login');
   };

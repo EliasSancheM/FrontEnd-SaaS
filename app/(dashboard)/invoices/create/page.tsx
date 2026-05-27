@@ -21,8 +21,9 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useSaaSStore, Client, InvoiceItem } from '@/lib/store';
+import { useAuthStore } from '@/lib/authStore';
 
 // Esquema de validación para la Factura con Zod
 const invoiceSchema = z.object({
@@ -45,6 +46,7 @@ export default function CreateInvoicePage() {
   const { clients, invoices, addClient, addInvoice, initialize } = useSaaSStore();
   const [isQuickClientOpen, setIsQuickClientOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const { companySettings, user } = useAuthStore();
 
   // Inicializar Zustand Store en cliente
   useEffect(() => {
@@ -180,7 +182,6 @@ export default function CreateInvoicePage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      <Toaster position="top-right" />
 
       {/* ENCABEZADO Y REGRESO */}
       <div className="flex flex-col gap-3">
@@ -536,21 +537,21 @@ export default function CreateInvoicePage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold text-lg tracking-tight uppercase">
                       <Sparkles className="w-5 h-5 text-emerald-600" />
-                      MI EMPRESA SAAS
+                      {companySettings.companyName}
                     </div>
                     <p className="text-[9px] font-semibold text-zinc-450 leading-relaxed uppercase">
-                      Servicios Tecnológicos de Facturación SpA<br />
-                      Av. Apoquindo 100, Las Condes, Stgo<br />
-                      Fono: +56 2 2888 9900 | santiago@misaas.cl
+                      {companySettings.giro}<br />
+                      {companySettings.address}, {companySettings.city}<br />
+                      Fono: {companySettings.phone} | {user?.email || ''}
                     </p>
                   </div>
 
                   {/* INSIGNIA SII CHILE ESTILO PREMIUM */}
                   <div className="border-2 border-red-500 text-red-500 rounded p-3 text-center min-w-[150px] shrink-0">
-                    <span className="text-[9px] font-bold block leading-none uppercase">R.U.T.: 76.888.999-1</span>
+                    <span className="text-[9px] font-bold block leading-none uppercase">R.U.T.: {companySettings.taxId}</span>
                     <span className="text-[10px] font-extrabold block my-1 uppercase">FACTURA ELECTRÓNICA</span>
                     <span className="text-[11px] font-black block leading-none">{watchedNumber || 'FAC-XXXX'}</span>
-                    <span className="text-[6px] font-extrabold block text-zinc-400 mt-1 uppercase">S.I.I. - SANTIAGO ORIENTE</span>
+                    <span className="text-[6px] font-extrabold block text-zinc-400 mt-1 uppercase">{companySettings.siiResolution || 'S.I.I. - SANTIAGO ORIENTE'}</span>
                   </div>
                 </div>
 
@@ -655,7 +656,7 @@ export default function CreateInvoicePage() {
                 <div className="flex justify-between items-center mt-6 pt-4 border-t border-dashed border-zinc-150">
                   <div className="flex items-center gap-1 opacity-20">
                     <Sparkles className="w-5 h-5 text-emerald-800" />
-                    <span className="text-[7px] font-black tracking-widest text-zinc-900 uppercase">MI EMPRESA SAAS - SII CHILE CONECTADO</span>
+                    <span className="text-[7px] font-black tracking-widest text-zinc-900 uppercase">{companySettings.companyName} - SII CHILE CONECTADO</span>
                   </div>
                   <span className="text-[7px] px-2 py-0.5 border border-zinc-300 rounded text-zinc-400 font-bold tracking-wider uppercase">
                     Documento Borrador

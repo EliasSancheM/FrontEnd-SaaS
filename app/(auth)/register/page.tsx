@@ -14,10 +14,14 @@ const registerSchema = z.object({
   name: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres' }),
   company: z.string().min(3, { message: 'El nombre de la empresa debe tener al menos 3 caracteres' }),
   email: z.string().email({ message: 'Ingresa un correo electrónico válido' }),
-  password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres' }),
+  password: z.string().min(8, { message: 'La contraseña debe tener al menos 8 caracteres' }),
+  password_confirmation: z.string().min(8, { message: 'Confirma tu contraseña' }),
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: 'Debes aceptar los términos y condiciones de uso',
   }),
+}).refine((data) => data.password === data.password_confirmation, {
+  message: 'Las contraseñas no coinciden',
+  path: ['password_confirmation'],
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -48,6 +52,7 @@ export default function RegisterPage() {
       company: '',
       email: '',
       password: '',
+      password_confirmation: '',
       acceptTerms: undefined,
     },
   });
@@ -55,7 +60,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     try {
-      const success = await registerUser(data.email, data.name, data.company);
+      const success = await registerUser(data.email, data.name, data.company, data.password);
       if (success) {
         toast.success('¡Registro completado con éxito! Bienvenido al SaaS.', {
           icon: '🎉',
@@ -202,7 +207,7 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   className={`w-full pl-10 pr-4 py-2.5 bg-zinc-900/60 border rounded-xl text-sm text-white placeholder-zinc-550 focus:outline-none focus:ring-4 transition-all duration-200 ${
                     errors.password 
                       ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10' 
@@ -214,6 +219,33 @@ export default function RegisterPage() {
               {errors.password && (
                 <p className="text-xs text-red-400 mt-1 font-medium">
                   {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* CONFIRMAR CONTRASEÑA */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                Confirmar Contraseña
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  type="password"
+                  placeholder="Repite tu contraseña"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-zinc-900/60 border rounded-xl text-sm text-white placeholder-zinc-550 focus:outline-none focus:ring-4 transition-all duration-200 ${
+                    errors.password_confirmation
+                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
+                      : 'border-zinc-800 focus:border-emerald-500 focus:ring-emerald-500/10'
+                  }`}
+                  {...register('password_confirmation')}
+                />
+              </div>
+              {errors.password_confirmation && (
+                <p className="text-xs text-red-400 mt-1 font-medium">
+                  {errors.password_confirmation.message}
                 </p>
               )}
             </div>

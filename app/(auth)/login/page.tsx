@@ -62,7 +62,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email);
+      const success = await login(data.email, data.password);
       if (success) {
         toast.success('¡Sesión iniciada con éxito! Bienvenido.', {
           icon: '🚀',
@@ -86,7 +86,7 @@ export default function LoginPage() {
     
     try {
       toast.loading(`Ingresando como ${demoUser.name}...`, { id: 'demo-auth', duration: 800 });
-      const success = await login(demoUser.email, demoUser.name, demoUser.company);
+      const success = await login(demoUser.email, demoUser.password);
       if (success) {
         setTimeout(() => {
           toast.success(`¡Bienvenido, ${demoUser.name.split(' ')[0]}!`, { id: 'demo-auth' });

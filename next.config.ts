@@ -1,12 +1,17 @@
 import type { NextConfig } from "next";
 
+const basePath = "/FrontEnd-SaaS";
+
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: "/FrontEnd-SaaS",
+  basePath,
   images: {
     unoptimized: true,
   },
   trailingSlash: true,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
 };
 
 export default nextConfig;

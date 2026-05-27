@@ -12,6 +12,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import FloatingCard3D from '@/components/dashboard/FloatingCard3D';
+import FinancialChart from '@/components/dashboard/FinancialChart';
 import { useSaaSStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/authStore';
 
@@ -75,6 +76,17 @@ export default function DashboardPage() {
   const userName = user?.name ? user.name.split(' ')[0] : 'Usuario';
   const companyName = user?.company || 'tu empresa';
 
+  // Datos del gráfico financiero de los últimos 6 meses
+  // El último mes (actual) se calcula dinámicamente desde las facturas del store
+  const chartData = [
+    { month: 'Dic 2025', ingresos: 4200000, gastos: 1470000 },
+    { month: 'Ene 2026', ingresos: 5100000, gastos: 1785000 },
+    { month: 'Feb 2026', ingresos: 3800000, gastos: 1330000 },
+    { month: 'Mar 2026', ingresos: 6200000, gastos: 2170000 },
+    { month: 'Abr 2026', ingresos: 5500000, gastos: 1925000 },
+    { month: 'May 2026', ingresos: totalInvoiced || 8950000, gastos: Math.round((totalInvoiced || 8950000) * 0.35) },
+  ];
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
@@ -125,6 +137,27 @@ export default function DashboardPage() {
           icon={Users}
           color="bg-blue-500/10 text-blue-600 dark:bg-blue-500/5 dark:text-blue-400"
         />
+      </div>
+
+      {/* GRÁFICO DE TENDENCIA FINANCIERA (RECHARTS) */}
+      <div className="bg-white/95 dark:bg-[#0e1427]/70 backdrop-blur-md border border-zinc-100 dark:border-zinc-900/60 rounded-2xl shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Ingresos vs Gastos</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Tendencia financiera de los últimos 6 meses.</p>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'hsl(250, 89%, 65%)' }} />
+              <span className="text-zinc-500 dark:text-zinc-400 font-medium">Ingresos</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'hsl(190, 90%, 50%)' }} />
+              <span className="text-zinc-500 dark:text-zinc-400 font-medium">Gastos</span>
+            </div>
+          </div>
+        </div>
+        <FinancialChart data={chartData} />
       </div>
 
       {/* SECCIÓN INFERIOR: FACTURAS RECIENTES & ACCESOS RÁPIDOS */}
