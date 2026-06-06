@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/authStore';
-import { useSaaSStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 import {
   Building2,
@@ -43,7 +42,6 @@ const sections: SectionNavItem[] = [
 
 export default function SettingsPage() {
   const { user, companySettings, updateProfile, updateCompanySettings, resetCompanySettings } = useAuthStore();
-  const saasStore = useSaaSStore();
   const [activeSection, setActiveSection] = useState<SettingsSection>('company');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -53,10 +51,6 @@ export default function SettingsPage() {
     name: user?.name || '',
     email: user?.email || '',
   });
-
-  useEffect(() => {
-    saasStore.initialize();
-  }, [saasStore.initialize]);
 
   useEffect(() => {
     setForm(companySettings);
