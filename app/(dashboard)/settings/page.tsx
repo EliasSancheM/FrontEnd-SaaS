@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/authStore';
-import { useSaaSStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 import {
   Building2,
@@ -43,7 +42,6 @@ const sections: SectionNavItem[] = [
 
 export default function SettingsPage() {
   const { user, companySettings, updateProfile, updateCompanySettings, resetCompanySettings } = useAuthStore();
-  const saasStore = useSaaSStore();
   const [activeSection, setActiveSection] = useState<SettingsSection>('company');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -53,10 +51,6 @@ export default function SettingsPage() {
     name: user?.name || '',
     email: user?.email || '',
   });
-
-  useEffect(() => {
-    saasStore.initialize();
-  }, [saasStore.initialize]);
 
   useEffect(() => {
     setForm(companySettings);
@@ -74,41 +68,41 @@ export default function SettingsPage() {
 
   const handleSaveCompanyProfile = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    updateCompanySettings(form);
-    updateProfile({ 
-      name: profileForm.name, 
-      email: profileForm.email,
-      company: form.companyName 
-    });
-    
-    setIsSaving(false);
-    toast.success('Configuración guardada exitosamente', {
-      icon: '✅',
-      style: { 
-        background: '#0e0e0e', 
-        color: '#fff', 
-        border: '1px solid rgba(16,185,129,0.2)',
-        borderRadius: '12px'
-      },
-    });
+    try {
+      await updateCompanySettings(form);
+      updateProfile({
+        name: profileForm.name,
+        email: profileForm.email,
+        company: form.companyName,
+      });
+      toast.success('Configuración guardada exitosamente', {
+        icon: '✅',
+        style: { background: '#0e0e0e', color: '#fff', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' },
+      });
+    } catch {
+      toast.error('No se pudo guardar la configuración. Verifica tus permisos.', {
+        style: { background: '#0e0e0e', color: '#fff', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px' },
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleResetSettings = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 400));
-    resetCompanySettings();
-    setIsSaving(false);
-    toast.success('Configuración restaurada a valores predeterminados', {
-      icon: '🔄',
-      style: { 
-        background: '#0e0e0e', 
-        color: '#fff', 
-        border: '1px solid rgba(251,191,36,0.2)',
-        borderRadius: '12px'
-      },
-    });
+    try {
+      await resetCompanySettings();
+      toast.success('Configuración restaurada a valores predeterminados', {
+        icon: '🔄',
+        style: { background: '#0e0e0e', color: '#fff', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '12px' },
+      });
+    } catch {
+      toast.error('No se pudo restaurar la configuración.', {
+        style: { background: '#0e0e0e', color: '#fff', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px' },
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleWipeData = async () => {

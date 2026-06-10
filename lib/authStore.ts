@@ -48,12 +48,9 @@ interface AuthStore {
   register: (email: string, name: string, company: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
-  updateCompanySettings: (updates: Partial<CompanySettings>) => void;
-  resetCompanySettings: () => void;
+  updateCompanySettings: (updates: Partial<CompanySettings>) => Promise<void>;
+  resetCompanySettings: () => Promise<void>;
 }
-
-// ─── Helper: per-user localStorage key ────────────────
-function settingsKey(userId: string) { return `company_settings_${userId}`; }
 
 // ─── Demo Users ───────────────────────────────────────
 
@@ -230,10 +227,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         };
 
         const userId = user.email;
-        const storedSettings = localStorage.getItem(settingsKey(userId));
-        const settings = storedSettings
-          ? { ...getDefaultSettings(userId), ...JSON.parse(storedSettings) }
-          : getDefaultSettings(userId);
+        // El backend es la fuente de verdad para la configuración de empresa.
+        const tenantSettings = (userData.tenant?.settings ?? {}) as Partial<CompanySettings>;
+        const settings = { ...getDefaultSettings(userId), ...tenantSettings };
 
         localStorage.setItem('auth_user', JSON.stringify(user));
 
@@ -269,12 +265,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       };
 
       const userId = user.email;
-      const storedSettings = typeof window !== 'undefined'
-        ? localStorage.getItem(settingsKey(userId))
-        : null;
-      const settings = storedSettings
-        ? { ...getDefaultSettings(userId), ...JSON.parse(storedSettings) }
-        : getDefaultSettings(userId);
+      const tenantSettings = (userData.tenant?.settings ?? {}) as Partial<CompanySettings>;
+      const settings = { ...getDefaultSettings(userId), ...tenantSettings };
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', token);
@@ -362,23 +354,36 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  updateCompanySettings: (updates) => {
-    const current = get().companySettings;
-    const userId = get().user?.email;
-    const updated = { ...current, ...updates };
-    set({ companySettings: updated });
+  updateCompanySettings: async (updates) => {
+    const previous = get().companySettings;
+    const updated = { ...previous, ...updates };
 
-    if (typeof window !== 'undefined' && userId) {
-      localStorage.setItem(settingsKey(userId), JSON.stringify(updated));
+    // Actualización optimista de la UI.
+    set({ companySettings: updated });
+    if (updates.companyName) {
+      const u = get().user;
+      if (u) set({ user: { ...u, company: updates.companyName } });
+    }
+
+    try {
+      await api.put('/tenant', { settings: updated });
+    } catch (error) {
+      // Revertir si el backend rechaza el guardado.
+      set({ companySettings: previous });
+      throw error;
     }
   },
 
-  resetCompanySettings: () => {
+  resetCompanySettings: async () => {
     const userId = get().user?.email;
     const defaults = userId ? getDefaultSettings(userId) : DEFAULT_SETTINGS;
+    const previous = get().companySettings;
     set({ companySettings: defaults });
-    if (typeof window !== 'undefined' && userId) {
-      localStorage.removeItem(settingsKey(userId));
+    try {
+      await api.put('/tenant', { settings: defaults });
+    } catch (error) {
+      set({ companySettings: previous });
+      throw error;
     }
   },
 }));

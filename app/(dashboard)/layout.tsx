@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/authStore';
-import { useSaaSStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 import { 
   LayoutDashboard, 
@@ -50,7 +49,6 @@ export default function DashboardLayout({
   const headerRef = useRef<HTMLElement>(null);
 
   const { user, isAuthenticated, isInitialized, initialize, logout } = useAuthStore();
-  const saasStore = useSaaSStore();
 
   useGSAP(() => {
     if (isAuthenticated) {
@@ -87,13 +85,6 @@ export default function DashboardLayout({
     initialize();
   }, [initialize]);
 
-  // Initialize SaaS store with user's data when authenticated
-  useEffect(() => {
-    if (isAuthenticated && user?.email) {
-      saasStore.reinitialize(user.email);
-    }
-  }, [isAuthenticated, user?.email]);
-
   useEffect(() => {
     if (isInitialized && !isAuthenticated) {
       router.push('/login');
@@ -115,7 +106,6 @@ export default function DashboardLayout({
   }
 
   const handleLogout = async () => {
-    saasStore.clearContext();
     await logout();
     toast.success('Sesión cerrada correctamente');
     router.push('/login');

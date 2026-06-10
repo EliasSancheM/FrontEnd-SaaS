@@ -1,78 +1,83 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { 
-  FileText, 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
-  DollarSign, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle,
+import {
+  FileText,
+  Plus,
+  Search,
+  DollarSign,
+  Clock,
+  CheckCircle2,
   Eye,
   FileDown,
   CreditCard,
-  ArrowUpRight
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSaaSStore } from '@/lib/store';
+import { useInvoices, useMarkInvoicePaid, downloadInvoicePdf } from '@/lib/invoices';
+import { useClients } from '@/lib/clients';
+import { money, invoiceStatusLabel, toNumber } from '@/lib/format';
+
+const toastStyle = {
+  style: {
+    background: 'var(--color-card)',
+    color: 'var(--color-foreground)',
+    border: '1px solid var(--color-border)',
+  },
+};
 
 export default function InvoicesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
 
-  const { invoices, markInvoiceAsPaid, initialize, isInitialized } = useSaaSStore();
+  const { data: invoices = [], isLoading, isError, refetch } = useInvoices();
+  const { data: clients = [] } = useClients();
+  const markPaid = useMarkInvoicePaid();
 
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
+  // Mapa id -> nombre de cliente para mostrar la razón social en la tabla.
+  const clientName = useMemo(() => {
+    const map = new Map<number, string>();
+    clients.forEach((c) => map.set(c.id, c.name));
+    return (id: number) => map.get(id) ?? `Cliente #${id}`;
+  }, [clients]);
 
-  // Simulación de descarga de PDF
-  const handleDownloadPdf = (invoiceNumber: string) => {
-    toast.success(`Descargando PDF de la factura ${invoiceNumber}...`, {
-      style: {
-        background: 'var(--color-card)',
-        color: 'var(--color-foreground)',
-        border: '1px border var(--color-border)',
-      }
+  const handleDownloadPdf = async (id: number, number: string) => {
+    const t = toast.loading(`Generando PDF de ${number}...`, toastStyle);
+    try {
+      await downloadInvoicePdf(id, number);
+      toast.success(`PDF de ${number} descargado`, { id: t, ...toastStyle });
+    } catch {
+      toast.error('No se pudo descargar el PDF', { id: t, ...toastStyle });
+    }
+  };
+
+  const handleMarkAsPaid = (id: number, number: string) => {
+    markPaid.mutate(id, {
+      onSuccess: () => toast.success(`Factura ${number} marcada como PAGADA`, { icon: '💰', ...toastStyle }),
+      onError: () => toast.error('No se pudo actualizar la factura', toastStyle),
     });
   };
 
-  // Simulación de registro de pago
-  const handleMarkAsPaid = (invoiceId: string, invoiceNumber: string) => {
-    markInvoiceAsPaid(invoiceId);
-    toast.success(`Factura ${invoiceNumber} marcada como PAGADA con éxito`, {
-      icon: '💰',
-      style: {
-        background: 'var(--color-card)',
-        color: 'var(--color-foreground)',
-        border: '1px border var(--color-border)',
-      }
-    });
-  };
-
-  // Filtrado de facturas en tiempo real
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
-      invoice.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.client.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = 
-      statusFilter === 'all' || 
+  const filteredInvoices = invoices.filter((invoice) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      invoice.number.toLowerCase().includes(term) ||
+      clientName(invoice.client_id).toLowerCase().includes(term);
+    const matchesStatus =
+      statusFilter === 'all' ||
       (statusFilter === 'paid' && invoice.status === 'paid') ||
       (statusFilter === 'pending' && (invoice.status === 'sent' || invoice.status === 'draft')) ||
       (statusFilter === 'overdue' && invoice.status === 'overdue');
-
     return matchesSearch && matchesStatus;
   });
 
-  // Cálculos rápidos de cabecera
-  const totalInvoiced = invoices.reduce((acc, inv) => acc + inv.amount, 0);
-  const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((acc, inv) => acc + inv.amount, 0);
-  const totalPending = invoices.filter(inv => inv.status === 'sent' || inv.status === 'draft' || inv.status === 'overdue').reduce((acc, inv) => acc + inv.amount, 0);
+  const totalInvoiced = invoices.reduce((acc, inv) => acc + toNumber(inv.total), 0);
+  const totalPaid = invoices.filter((i) => i.status === 'paid').reduce((acc, inv) => acc + toNumber(inv.total), 0);
+  const totalPending = invoices
+    .filter((i) => i.status === 'sent' || i.status === 'draft' || i.status === 'overdue')
+    .reduce((acc, inv) => acc + toNumber(inv.total), 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -81,16 +86,14 @@ export default function InvoicesPage() {
       {/* ENCABEZADO & ACCIÓN DE CREAR */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            Facturas
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Facturas</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             Administra tus ingresos, estados de facturación y cobros electrónicos integrados.
           </p>
         </div>
         <div>
-          <Link 
-            href="/invoices/create" 
+          <Link
+            href="/invoices/create"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/95 transition-all shadow-lg shadow-primary/20 hover:-translate-y-0.5"
           >
             <Plus className="w-5 h-5" />
@@ -101,56 +104,45 @@ export default function InvoicesPage() {
 
       {/* TARJETAS DE RESUMEN FINANCIERO RÁPIDO */}
       <div className="grid gap-6 sm:grid-cols-3">
-        {/* Total Emitido */}
         <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm flex items-center gap-4">
           <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300">
             <DollarSign className="w-6 h-6" />
           </div>
           <div>
             <span className="text-xs font-semibold text-zinc-400 uppercase">Total Facturado</span>
-            <h4 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">
-              ${totalInvoiced.toLocaleString()}
-            </h4>
+            <h4 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">{money(totalInvoiced)}</h4>
           </div>
         </div>
 
-        {/* Total Cobrado */}
         <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm flex items-center gap-4">
           <div className="p-3 rounded-xl bg-emerald-500/10 text-primary dark:bg-emerald-500/5">
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
             <span className="text-xs font-semibold text-zinc-400 uppercase">Cobrado</span>
-            <h4 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">
-              ${totalPaid.toLocaleString()}
-            </h4>
+            <h4 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">{money(totalPaid)}</h4>
           </div>
         </div>
 
-        {/* Total Pendiente */}
         <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl p-6 shadow-sm flex items-center gap-4">
           <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/5 dark:text-amber-500">
             <Clock className="w-6 h-6" />
           </div>
           <div>
             <span className="text-xs font-semibold text-zinc-400 uppercase">Por Cobrar</span>
-            <h4 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">
-              ${totalPending.toLocaleString()}
-            </h4>
+            <h4 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">{money(totalPending)}</h4>
           </div>
         </div>
       </div>
 
       {/* FILTROS Y BÚSQUEDA */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center p-4 bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl shadow-sm">
-        
-        {/* BUSCADOR */}
         <div className="relative w-full md:max-w-md">
           <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
             <Search className="w-4 h-4" />
           </span>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Buscar por número de factura o cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -158,54 +150,71 @@ export default function InvoicesPage() {
           />
         </div>
 
-        {/* TABS DE ESTADO */}
         <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-          <button 
+          <button
             onClick={() => setStatusFilter('all')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-              statusFilter === 'all' 
-                ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:border-white dark:text-black shadow-sm' 
+              statusFilter === 'all'
+                ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:border-white dark:text-black shadow-sm'
                 : 'bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50 dark:bg-[#0e0e0e] dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900'
             }`}
           >
             Todas ({invoices.length})
           </button>
-          <button 
+          <button
             onClick={() => setStatusFilter('paid')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-              statusFilter === 'paid' 
-                ? 'bg-primary border-primary text-primary-foreground shadow-sm' 
+              statusFilter === 'paid'
+                ? 'bg-primary border-primary text-primary-foreground shadow-sm'
                 : 'bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50 dark:bg-[#0e0e0e] dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900'
             }`}
           >
-            Pagadas ({invoices.filter(i => i.status === 'paid').length})
+            Pagadas ({invoices.filter((i) => i.status === 'paid').length})
           </button>
-          <button 
+          <button
             onClick={() => setStatusFilter('pending')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-              statusFilter === 'pending' 
-                ? 'bg-amber-500 border-amber-500 text-white dark:bg-amber-500/10 dark:border-amber-500 dark:text-amber-500 shadow-sm' 
+              statusFilter === 'pending'
+                ? 'bg-amber-500 border-amber-500 text-white dark:bg-amber-500/10 dark:border-amber-500 dark:text-amber-500 shadow-sm'
                 : 'bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50 dark:bg-[#0e0e0e] dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900'
             }`}
           >
-            Pendientes ({invoices.filter(i => i.status === 'sent' || i.status === 'draft').length})
+            Pendientes ({invoices.filter((i) => i.status === 'sent' || i.status === 'draft').length})
           </button>
-          <button 
+          <button
             onClick={() => setStatusFilter('overdue')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-              statusFilter === 'overdue' 
-                ? 'bg-red-500 border-red-500 text-white dark:bg-red-500/10 dark:border-red-500 dark:text-red-400 shadow-sm' 
+              statusFilter === 'overdue'
+                ? 'bg-red-500 border-red-500 text-white dark:bg-red-500/10 dark:border-red-500 dark:text-red-400 shadow-sm'
                 : 'bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50 dark:bg-[#0e0e0e] dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900'
             }`}
           >
-            Vencidas ({invoices.filter(i => i.status === 'overdue').length})
+            Vencidas ({invoices.filter((i) => i.status === 'overdue').length})
           </button>
         </div>
       </div>
 
       {/* TABLA PRINCIPAL DE FACTURAS */}
       <div className="bg-white dark:bg-[#0e0e0e] border border-zinc-100 dark:border-zinc-900 rounded-2xl shadow-sm overflow-hidden">
-        {filteredInvoices.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-zinc-500 dark:text-zinc-400">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="mt-4 text-sm font-medium">Cargando facturas...</p>
+          </div>
+        ) : isError ? (
+          <div className="p-16 text-center">
+            <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">No se pudieron cargar las facturas</h3>
+            <button
+              onClick={() => refetch()}
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/95 transition-all"
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : filteredInvoices.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -222,28 +231,14 @@ export default function InvoicesPage() {
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900 text-sm">
                 {filteredInvoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/10 transition-colors">
-                    
-                    {/* Número de factura */}
                     <td className="py-4 px-6 font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
                       <FileText className="w-4 h-4 text-zinc-400" />
                       {invoice.number}
                     </td>
-                    
-                    {/* Cliente */}
-                    <td className="py-4 px-6 font-medium text-zinc-850 dark:text-zinc-200">{invoice.client}</td>
-                    
-                    {/* Fecha de Emisión */}
-                    <td className="py-4 px-6 text-zinc-500 dark:text-zinc-500">{invoice.issueDate}</td>
-                    
-                    {/* Fecha de Vencimiento */}
-                    <td className="py-4 px-6 text-zinc-500 dark:text-zinc-500">{invoice.dueDate}</td>
-                    
-                    {/* Monto formateado */}
-                    <td className="py-4 px-6 font-bold text-zinc-900 dark:text-white">
-                      ${invoice.amount.toLocaleString()}
-                    </td>
-                    
-                    {/* Estado */}
+                    <td className="py-4 px-6 font-medium text-zinc-850 dark:text-zinc-200">{clientName(invoice.client_id)}</td>
+                    <td className="py-4 px-6 text-zinc-500 dark:text-zinc-500">{invoice.issue_date}</td>
+                    <td className="py-4 px-6 text-zinc-500 dark:text-zinc-500">{invoice.due_date ?? '—'}</td>
+                    <td className="py-4 px-6 font-bold text-zinc-900 dark:text-white">{money(invoice.total)}</td>
                     <td className="py-4 px-6">
                       <span className={`
                         inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold
@@ -251,35 +246,29 @@ export default function InvoicesPage() {
                         ${invoice.status === 'sent' ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/5 dark:text-amber-500' : ''}
                         ${invoice.status === 'overdue' ? 'bg-red-500/10 text-red-600 dark:bg-red-500/5 dark:text-red-400' : ''}
                         ${invoice.status === 'draft' ? 'bg-zinc-100 text-zinc-550 dark:bg-zinc-900 dark:text-zinc-400' : ''}
+                        ${invoice.status === 'cancelled' ? 'bg-zinc-100 text-zinc-550 dark:bg-zinc-900 dark:text-zinc-400' : ''}
                       `}>
-                        {invoice.statusLabel}
+                        {invoiceStatusLabel(invoice.status)}
                       </span>
                     </td>
-                    
-                    {/* Acciones */}
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Ver Detalle */}
-                        <Link 
+                        <Link
                           href={`/invoices/${invoice.id}`}
                           className="p-2 rounded-lg text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50 dark:hover:text-white dark:hover:bg-zinc-900/60 transition-colors"
                           title="Ver Detalle"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
-                        
-                        {/* Descargar PDF */}
-                        <button 
-                          onClick={() => handleDownloadPdf(invoice.number)}
+                        <button
+                          onClick={() => handleDownloadPdf(invoice.id, invoice.number)}
                           className="p-2 rounded-lg text-zinc-500 hover:text-emerald-600 hover:bg-emerald-500/5 dark:hover:text-emerald-400 dark:hover:bg-emerald-950/20 transition-colors"
                           title="Descargar PDF"
                         >
                           <FileDown className="w-4 h-4" />
                         </button>
-
-                        {/* Registrar Pago si no está Pagada */}
                         {invoice.status !== 'paid' && (
-                          <button 
+                          <button
                             onClick={() => handleMarkAsPaid(invoice.id, invoice.number)}
                             className="p-2 rounded-lg text-zinc-500 hover:text-blue-650 hover:bg-blue-500/5 dark:hover:text-blue-400 dark:hover:bg-blue-950/20 transition-colors"
                             title="Registrar Pago"
@@ -289,7 +278,6 @@ export default function InvoicesPage() {
                         )}
                       </div>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
@@ -307,7 +295,6 @@ export default function InvoicesPage() {
           </div>
         )}
       </div>
-
     </div>
   );
 }
